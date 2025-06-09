@@ -1,15 +1,104 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  superadmin
+  admin
+  moderator
+  user
+}
+
+model User {
+  id            Int             @id @default(autoincrement())
+  email         String          @unique @db.VarChar(100)
+  password      String          @db.VarChar(255)
+  fullName      String?         @db.VarChar(100)
+  role          Role            @default(user)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  // Relations - Users create Clients, Folders, and Consults
+  createdClients  Client[]       @relation("ClientCreator")
+  createdFolders  ConsultFolder[] @relation("FolderCreator")
+  createdConsults Consult[]      @relation("ConsultCreator")
+}
+
+model Client {
+  id           Int             @id @default(autoincrement())
+  clientCode   String?         @unique @db.VarChar(20)
+  name         String          @db.VarChar(100)
+  business     String?         @db.VarChar(100)
+  phone        String?         @db.VarChar(20)
+  address      String?         @db.VarChar(255)
+  npwp         String?         @db.VarChar(45)
+  nkp          String?         @db.VarChar(45)
+  notes        String?         @db.Text
+
+  isDeleted    Boolean         @default(false)
+  deletedAt    DateTime?
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  createdById  Int
+  createdBy    User            @relation("ClientCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  folders      ConsultFolder[]
+
+  @@index([createdById])
+}
+
+model ConsultFolder {
+  id           Int             @id @default(autoincrement())
+  folderCode   String?         @unique @db.VarChar(20)
+  clientId     Int
+  title        String          @db.VarChar(100) // required field
+  description  String?         @db.Text
+
+  isDeleted    Boolean         @default(false)
+  deletedAt    DateTime?
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  createdById  Int
+  createdBy    User            @relation("FolderCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  client       Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  consults     Consult[]
+
+  @@index([clientId])
+  @@index([createdById])
+  @@unique([clientId, title])
+}
+
+model Consult {
+  id           Int             @id @default(autoincrement())
+  consultCode  String?         @unique @db.VarChar(20)
+  folderId     Int
+  aim          String?         @db.VarChar(255)
+  notes        String          @db.Text
+  result       String?         @db.Text
+  consultDate  DateTime        @default(now())
+
+  isDeleted    Boolean         @default(false)
+  deletedAt    DateTime?
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  createdById  Int
+  createdBy    User            @relation("ConsultCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  folder       ConsultFolder   @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  @@index([folderId])
+  @@index([consultDate])
+  @@index([createdById])
 }
