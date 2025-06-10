@@ -24,7 +24,5 @@ export interface TableConfig {
     optionalFields?: string[];
     
     //Table Relations
-    includeRelations?: {
-        [relationName: string]: boolean;
-    };
+    includeRelations?: Record<string, boolean | object>;
 }

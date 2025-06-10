@@ -40,3 +40,19 @@
 .read-the-docs {
   color: #888;
 }
+
+/* App.css */
+.client-row {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+.client-col {
+  width: 180px;
+  color: #888;
+}
+.client-header {
+  display: flex;
+  font-weight: bold;
+  padding: 8px 0;
+}

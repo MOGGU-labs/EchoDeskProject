@@ -33,6 +33,7 @@ model Client {
   id           Int             @id @default(autoincrement())
   clientCode   String?         @unique @db.VarChar(20)
   name         String          @db.VarChar(100)
+  email        String?         @unique @db.VarChar(100) 
   business     String?         @db.VarChar(100)
   phone        String?         @db.VarChar(20)
   address      String?         @db.VarChar(255)

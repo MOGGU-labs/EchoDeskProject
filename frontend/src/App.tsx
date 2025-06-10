@@ -1,34 +1,75 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [records, setRecords] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Replace with your backend endpoint
+    fetch('http://localhost:3000/clients')
+      .then(res => {
+        if (!res.ok) throw new Error('Network response was not ok')
+        return res.json()
+      })
+      .then(data => {
+        // If your data is wrapped in a "data" field, use data.data
+        setRecords(data.data || data)
+        setLoading(false)
+      })
+      .catch(err => {
+        setError('Failed to fetch records')
+        setLoading(false)
+      })
+  }, [])
+
+  // Helper to get the latest updated folder object
+  const getLatestFolder = (folders: any[] = []) => {
+    if (!folders.length) return null
+    const latest = [...folders].sort((a, b) =>
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    )[0]
+    return latest
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div style={{ textAlign: 'left' }}>
+      <h2>Client Records</h2>
+      {loading && <p>Loading...</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <ul style={{ listStyle: 'none', padding: 0 }}>
+        <li className="client-header">
+          <span className="client-col">Client </span>
+          <span className="client-col">Latest Folder</span>
+          <span className="client-col">Author</span>
+          <span className="client-col">Updated</span>
+        </li>
+        {records.map((record) => {
+          const latestFolder = getLatestFolder(record.folders)
+          return (
+            <li key={record.id} className="client-row">
+              <span className="client-col">
+                <strong>{record.clientCode}</strong>: {record.name}
+              </span>
+              <span className="client-col">
+                {latestFolder ? latestFolder.title : 'No folders'}
+              </span>
+              <span className="client-col">
+                {latestFolder && latestFolder.createdBy
+                  ? latestFolder.createdBy.fullName
+                  : 'N/A'}
+              </span>
+              <span className="client-col">
+                {latestFolder
+                  ? new Date(latestFolder.updatedAt).toLocaleString()
+                  : 'N/A'}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
   )
 }
 
